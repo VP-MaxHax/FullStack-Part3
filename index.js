@@ -72,6 +72,18 @@ let persons = [
     response.status(204).end()
   })
 
+  app.put('/api/persons/:id', (req, res) => {
+    const id = req.params.id;
+    const { name, number } = req.body;
+    const personIndex = persons.findIndex(person => person.id === id);
+    if (personIndex === -1) {
+      return res.status(404).send({ error: 'Person not found' });
+    }
+    const updatedPerson = { ...persons[personIndex], name, number };
+    persons[personIndex] = updatedPerson;
+    res.json(updatedPerson);
+  });
+
   const generateId = () => {
     let id = Math.floor(Math.random() * 1000000);
     while (persons.find(person => person.id === id)) {
