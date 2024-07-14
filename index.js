@@ -3,7 +3,7 @@ const express = require('express')
 const app = express()
 var morgan = require('morgan')
 const cors = require('cors')
-const Person = require('./models/person')
+const Person = require('./models/person.js')
 
 app.use(cors())
 
@@ -65,7 +65,7 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
       number: body.number,
     }
   
-    Person.findByIdAndUpdate(request.params.id, person, { new: true })
+    Person.findByIdAndUpdate(request.params.id, person, { new: true, runValidators: true, context: 'query' })
       .then(updatedPerson => {
         response.json(updatedPerson)
       })
@@ -77,7 +77,7 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
     return String(id);
   }
   
-  app.post('/api/persons', (request, response) => {
+  app.post('/api/persons', (request, response, next) => {
     const body = request.body
     console.log('body', body);
   
@@ -105,6 +105,7 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
       console.log('savedPerson', savedPerson);
       response.json(savedPerson)
     })
+    .catch(error => next(error))
   })
 
   const unknownEndpoint = (request, response) => {
@@ -119,6 +120,8 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
   
     if (error.name === 'CastError') {
       return response.status(400).send({ error: 'malformatted id' })
+    } else if (error.name === 'ValidationError') {
+      return response.status(400).json({ error: error.message })
     }
   
     next(error)
